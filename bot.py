@@ -91,9 +91,12 @@ def process_job(db, job_id, url):
     links, held = [], 0
     for c in clips:
         # deliver the file itself regardless of quota, so it can be published by
-        # hand (YouTube app) - not gated by the API's audit-locked private uploads
-        caption = "%s\n\n%s\n\n%s" % (c["title"], c["description"], " ".join(c["hashtags"]))
-        send_video(c["file"], caption)
+        # hand (YouTube app) - not gated by the API's audit-locked private uploads.
+        # title/description sent as separate messages so each is easy to copy-paste
+        # straight into the YouTube upload form.
+        send_video(c["file"], "")
+        say(c["title"])
+        say("%s\n\n%s" % (c["description"], " ".join(c["hashtags"])))
         if uploads_today(db) >= MAX_UPLOADS_PER_DAY:
             held += 1
             continue
