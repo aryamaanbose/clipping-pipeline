@@ -8,8 +8,9 @@ links. `dashboard.html` shows views / subs / estimated revenue.
 
 **This application uses YouTube API Services.** By using this application, the owner agrees to
 be bound by the [YouTube Terms of Service](https://www.youtube.com/t/terms). See the
-[Privacy Policy](PRIVACY_POLICY_URL_HERE) and [Terms of Service](TOS_URL_HERE) for how data is
-handled.
+[Privacy Policy](https://gist.github.com/aryamaanbose/a4832afb3744466f184b43ebf6404321) and
+[Terms of Service](https://gist.github.com/aryamaanbose/503769059ed923fac7763154582ef700) for
+how data is handled.
 
 ## One-time setup
 
