@@ -30,6 +30,34 @@ def tg(method, **params):
         return json.load(r)["result"]
 
 
+def send_video(path, caption):
+    """Deliver the clip file itself to Telegram, so it can be published by hand
+    (YouTube app upload) without going through the API's audit-gated private lock."""
+    boundary = "----clip" + os.urandom(8).hex()
+    b = boundary.encode()
+
+    def field(name, value):
+        return (b"--" + b + b"\r\n"
+                b'Content-Disposition: form-data; name="' + name.encode() + b'"\r\n\r\n' +
+                value + b"\r\n")
+
+    body = (
+        field("chat_id", CHAT_ID.encode()) +
+        field("caption", caption[:1024].encode()) +
+        b"--" + b + b"\r\n"
+        b'Content-Disposition: form-data; name="video"; filename="' +
+        Path(path).name.encode() + b'"\r\n'
+        b"Content-Type: video/mp4\r\n\r\n" +
+        Path(path).read_bytes() + b"\r\n"
+        b"--" + b + b"--\r\n"
+    )
+    req = urllib.request.Request(
+        API + "/sendVideo", data=body,
+        headers={"Content-Type": "multipart/form-data; boundary=" + boundary})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        return json.load(r)["result"]
+
+
 def say(text):
     try:
         tg("sendMessage", chat_id=CHAT_ID, text=text[:4000])
@@ -62,6 +90,10 @@ def process_job(db, job_id, url):
     clips = pipeline.run(url, workdir)
     links, held = [], 0
     for c in clips:
+        # deliver the file itself regardless of quota, so it can be published by
+        # hand (YouTube app) - not gated by the API's audit-locked private uploads
+        caption = "%s\n\n%s\n\n%s" % (c["title"], c["description"], " ".join(c["hashtags"]))
+        send_video(c["file"], caption)
         if uploads_today(db) >= MAX_UPLOADS_PER_DAY:
             held += 1
             continue
@@ -72,10 +104,10 @@ def process_job(db, job_id, url):
         links.append("https://youtube.com/shorts/" + vid)
     db.execute("UPDATE jobs SET status='done' WHERE id=?", (job_id,))
     db.commit()
-    msg = "posted %d clip(s) from %s:\n%s" % (len(links), clips[0]["source_title"] if clips
-                                              else url, "\n".join(links))
+    msg = "sent %d clip file(s) above for manual posting; %d also auto-uploaded (private) from %s:\n%s" % (
+        len(clips), len(links), clips[0]["source_title"] if clips else url, "\n".join(links))
     if held:
-        msg += "\n%d clip(s) held in %s - daily upload quota hit" % (held, workdir)
+        msg += "\n%d clip(s) skipped auto-upload - daily quota hit (still sent as files above)" % held
     if not held:
         shutil.rmtree(workdir, ignore_errors=True)
     say(msg)
