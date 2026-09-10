@@ -1,0 +1,7 @@
+av==15.1.0  # ponytail: last PyAV wheel for macOS 13 arm64; newer needs macOS 14+ or a source build
+yt-dlp
+static-ffmpeg  # brew dropped macOS 13; this ships ffmpeg w/ libass+x264
+faster-whisper
+anthropic
+google-api-python-client
+google-auth-oauthlib

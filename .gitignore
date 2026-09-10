@@ -1,0 +1,9 @@
+.env
+client_secret.json
+token.json
+state.db
+work/
+dashboard.json
+dashboard.html
+.venv/
+__pycache__/
